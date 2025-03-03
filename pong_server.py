@@ -50,6 +50,7 @@ class Ball:
         """
         if self.y <= 0 or self.y >= self.game_height - 1:
             self.on_bounce()
+        #Todo: add the score and save
 
     def check_goal(self):
         """
