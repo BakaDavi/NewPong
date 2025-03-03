@@ -1,74 +1,95 @@
 import pyxel
 
 class BaseManager:
+    """
+    Base Manager Class that provides object registration and management interface.
+    """
     def __init__(self):
         self.managed_objects = []
 
     def manage(self):
+        """
+        Placeholder method to be overridden by subclasses.
+        """
         pass
 
-    def register_object(self,object):
-        self.managed_objects.append(object)
+    def register_object(self, obj):
+        """
+        Registers an object to the manager list.
+        """
+        self.managed_objects.append(obj)
 
 class PhysicsManager(BaseManager):
+    """
+    Manages physics calculations like collision detection and boundary checks.
+    """
     def __init__(self):
         super().__init__()
-        #self.players = players    
 
     def manage(self):
-        # for obj in self.managed_objects:
-        #     obj.check_collisions(self.players)
+        """
+        Runs border checks and collision detection for all registered objects.
+        """
+        num_objects = len(self.managed_objects)
 
-        num_managed_objs = len(self.managed_objects)
-        
-        #TODO: optimizations to reduce for loop
-        for index_one in range(0,num_managed_objs):
-            self.check_borders(self.managed_objects[index_one])
-            for index_two in range(0,num_managed_objs):
-                if index_one != index_two:
-                    if self.check_collisions(self.managed_objects[index_one],self.managed_objects[index_two]):
-                        self.managed_objects[index_one].on_collide(self.managed_objects[index_two])
-                        self.managed_objects[index_two].on_collide(self.managed_objects[index_one])
+        for i in range(num_objects):
+            self.check_borders(self.managed_objects[i])
+            for j in range(i + 1, num_objects):
+                if self.check_collisions(self.managed_objects[i], self.managed_objects[j]):
+                    self.managed_objects[i].on_collide(self.managed_objects[j])
+                    self.managed_objects[j].on_collide(self.managed_objects[i])
 
     def check_collisions(self, obj1, obj2):
-        obj1_half_width = obj1.width // 2
-        obj2_half_width = obj2.width // 2
-        obj1_half_height = obj1.height // 2
-        obj2_half_height = obj2.height // 2
-        obj1_pivot = (obj1.x + obj1_half_width, obj1.y + obj1_half_height)
-        obj2_pivot = (obj2.x + obj2_half_width, obj2.y + obj2_half_height)
-        #colliding = obj2_pivot[0] < pyxel.width//2 - 20 and obj2_pivot[0] <= obj1_pivot[0] + halfWidth or obj2_pivot[0] > pyxel.width//2 + 20 and obj2_pivot[0] >= obj1_pivot[0] - halfWidth
-        x_collision = obj1_pivot[0] - obj1_half_width < obj2_pivot[0] - obj2_half_width and obj1_pivot[0] + obj1_half_width > obj2_pivot[0] - obj2_half_width or obj1_pivot[0] + obj1_half_width > obj2_pivot[0] + obj2_half_width and obj1_pivot[0] - obj1_half_width < obj2_pivot[0] + obj2_half_width
-        y_collision = obj1_pivot[1] + obj1_half_height > obj2_pivot[1] + obj2_half_height and obj1_pivot[1] - obj1_half_height < obj2_pivot[1] + obj2_half_height or obj1_pivot[1] + obj1_half_height > obj2_pivot[1] - obj2_half_height and obj1_pivot[1] - obj1_half_height < obj2_pivot[1] - obj2_half_height
-        return x_collision and y_collision
-    
-    def check_borders(self, obj):    
-        if obj.y >= pyxel.height - obj.height or obj.y <= 0:
-            obj.on_out_of_bounds(True) 
-        if obj.x >= pyxel.width - obj.width or obj.x <= 0:
-            obj.on_out_of_bounds(False)
-        #check if obj1 collides with obj2 -> AABBSat
-        # return True or False
-        pass        
+        """
+        Detects Axis-Aligned Bounding Box (AABB) collisions between two objects.
+        """
+        x_collision = (obj1.x < obj2.x + obj2.width) and (obj1.x + obj1.width > obj2.x)
+        y_collision = (obj1.y < obj2.y + obj2.height) and (obj1.y + obj1.height > obj2.y)
 
+        return x_collision and y_collision
+
+    def check_borders(self, obj):
+        """
+        Detects out-of-bounds collisions with screen borders.
+        """
+        if obj.y >= pyxel.height - obj.height or obj.y <= 0:
+            obj.on_out_of_bounds(True)  # Vertical boundaries
+        
+        if obj.x >= pyxel.width - obj.width or obj.x <= 0:
+            obj.on_out_of_bounds(False)  # Horizontal boundaries
 
 class TickManager(BaseManager):
+    """
+    Updates registered objects each game frame.
+    """
     def __init__(self):
         super().__init__()
 
     def manage(self):
+        """
+        Calls the `tick()` method for every registered object.
+        """
         for obj in self.managed_objects:
             obj.tick()
 
 class RenderManager(BaseManager):
+    """
+    Draws registered objects on the screen.
+    """
     def __init__(self):
         super().__init__()
 
     def manage(self):
+        """
+        Calls the `render()` method for every registered object.
+        """
         for obj in self.managed_objects:
             obj.render()
 
 class PointsManager(BaseManager):
+    """
+    Manages the player scores and interacts with the game save system.
+    """
     def __init__(self, game_save, player_one, player_two):
         super().__init__()
         self.game_save = game_save
@@ -76,5 +97,9 @@ class PointsManager(BaseManager):
         self.player_two = player_two
 
     def add_points_to_player(self, player):
+        """
+        Increments the player's score and updates the save data.
+        """
+        print(f"Point added to {player.name}")  # Debug print
         player.points += 1
         self.game_save.players_data[player.name] = player.points
