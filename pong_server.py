@@ -56,11 +56,11 @@ class Ball:
         Checks if the ball has reached a goal area.
         Resets the ball to the center and sets the horizontal direction accordingly.
         """
-        if self.x <= 0:
+        if self.x < 10: #player position
             self.x = self.game_width // 2
             self.y = self.game_height // 2
             self.dx = 1
-        elif self.x >= self.game_width - 1:
+        elif self.x > 150: #player position - width
             self.x = self.game_width // 2
             self.y = self.game_height // 2
             self.dx = -1
